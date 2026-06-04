@@ -16,10 +16,13 @@ export function loadSurveyState(): SurveyState {
     }
 
     const parsed = JSON.parse(raw) as SurveyState;
+
     if (parsed.completedAt) {
       return { ...parsed, isOpen: false };
     }
-    return parsed;
+
+    // Незавершённый опрос: сохраняем шаг, модалку открываем только по кнопке
+    return { ...parsed, isOpen: false, farewell: null };
   } catch {
     return INITIAL_SURVEY_STATE;
   }

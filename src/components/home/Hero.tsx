@@ -1,6 +1,9 @@
 "use client";
 
 import { Button } from "@/components/ui/Button";
+import { DecodedTitle } from "@/components/home/DecodedTitle";
+import { PROGRAM_INTRO } from "@/content/programSchedule";
+import { handleSectionNavClick } from "@/lib/navigation/smoothScroll";
 
 interface HeroProps {
   onStartSurvey: () => void;
@@ -20,14 +23,14 @@ export function Hero({ onStartSurvey }: HeroProps) {
       <div className="relative z-10 mx-auto grid max-w-[1180px] gap-8 px-5 lg:grid-cols-[1fr_360px] lg:items-start lg:gap-10">
         <div>
           <span className="mb-4 inline-block rounded-full bg-accent-light px-3 py-1 text-xs font-semibold uppercase tracking-wider text-accent">
-            Летний интенсив 2026
+            КиберСтраж 2026
           </span>
           <h1 className="font-heading text-4xl font-extrabold leading-tight tracking-tight text-text sm:text-5xl">
-            Кибер<span className="text-gradient">Без</span>Интенсив
+            <DecodedTitle />
           </h1>
           <p className="mt-4 max-w-xl text-lg leading-relaxed text-text-muted">
             Погрузись в мир информационной безопасности вместе с колледжем «ЛОГОС».
-            Пройди короткий опрос — и узнай, подходишь ли ты для участия.
+            Пройди короткий опрос и узнай, подходишь ли ты для участия.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
             <Button size="lg" onClick={onStartSurvey}>
@@ -35,6 +38,7 @@ export function Hero({ onStartSurvey }: HeroProps) {
             </Button>
             <a
               href="#about"
+              onClick={(event) => handleSectionNavClick(event, "about")}
               className="inline-flex items-center justify-center rounded-xl border border-border bg-surface px-7 py-3.5 text-base font-semibold text-accent shadow-sm transition-all hover:border-accent hover:bg-accent-light"
             >
               Узнать больше
@@ -42,18 +46,12 @@ export function Hero({ onStartSurvey }: HeroProps) {
           </div>
 
           <dl className="mt-10 flex flex-wrap gap-8">
-            <div>
-              <dt className="font-heading text-3xl font-extrabold text-accent">7</dt>
-              <dd className="mt-1 text-sm text-text-muted">дней программы</dd>
-            </div>
-            <div>
-              <dt className="font-heading text-3xl font-extrabold text-accent">IT</dt>
-              <dd className="mt-1 text-sm text-text-muted">практика и лекции</dd>
-            </div>
-            <div>
-              <dt className="font-heading text-3xl font-extrabold text-accent">ЛОГОС</dt>
-              <dd className="mt-1 text-sm text-text-muted">колледж в Боровске</dd>
-            </div>
+            {PROGRAM_INTRO.highlights.map((item) => (
+              <div key={item.label}>
+                <dt className="font-heading text-3xl font-extrabold text-accent">{item.label}</dt>
+                <dd className="mt-1 text-sm text-text-muted">{item.detail}</dd>
+              </div>
+            ))}
           </dl>
         </div>
 
@@ -64,7 +62,7 @@ export function Hero({ onStartSurvey }: HeroProps) {
               {
                 num: "01",
                 title: "Пройди опрос",
-                text: "Ответь на несколько вопросов — это займёт пару минут.",
+                text: "Ответь на несколько вопросов, это займёт пару минут.",
               },
               {
                 num: "02",

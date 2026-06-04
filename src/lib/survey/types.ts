@@ -39,6 +39,6 @@ export const INITIAL_SURVEY_STATE: SurveyState = {
   step: "want_intensive",
   answers: {},
   farewell: null,
-  isOpen: true,
+  isOpen: false,
   completedAt: null,
 };

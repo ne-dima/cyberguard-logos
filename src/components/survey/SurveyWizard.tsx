@@ -1,9 +1,9 @@
 "use client";
 
 import { Modal } from "@/components/ui/Modal";
-import { useSurvey } from "@/hooks/useSurvey";
+import { useSurveyContext } from "@/context/SurveyContext";
 import { FarewellMessage } from "./FarewellMessage";
-import { RegistrationFormStub } from "./RegistrationFormStub";
+import { RegistrationForm } from "./RegistrationForm";
 import { ApplyLogosQuestion } from "./questions/ApplyLogosQuestion";
 import { AverageGradeQuestion } from "./questions/AverageGradeQuestion";
 import { FavoriteSubjectQuestion } from "./questions/FavoriteSubjectQuestion";
@@ -13,9 +13,9 @@ import { TransferLogosQuestion } from "./questions/TransferLogosQuestion";
 import { WantIntensiveQuestion } from "./questions/WantIntensiveQuestion";
 
 export function SurveyWizard() {
-  const { state, isReady, closeSurvey, handlers } = useSurvey();
+  const { state, closeSurvey, handlers } = useSurveyContext();
 
-  if (!isReady || !state?.isOpen) {
+  if (!state.isOpen) {
     return null;
   }
 
@@ -72,7 +72,10 @@ export function SurveyWizard() {
         );
       case "registration":
         return (
-          <RegistrationFormStub onClose={handlers.completeRegistration} />
+          <RegistrationForm
+            onSubmitted={handlers.markApplicationSubmitted}
+            onComplete={handlers.completeRegistration}
+          />
         );
       default:
         return null;
@@ -83,7 +86,9 @@ export function SurveyWizard() {
     <Modal
       isOpen={state.isOpen}
       onClose={state.farewell ? closeSurvey : undefined}
-      ariaLabel="Опрос для участия в КиберБезИнтенсиве"
+      ariaLabel="Опрос для участия в КиберСтраже"
+      size={state.step === "registration" ? "lg" : "md"}
+      scrollable={state.step === "registration"}
     >
       <div key={`${state.step}-${state.farewell ?? "active"}`} className="animate-question-in">
         {renderStep()}

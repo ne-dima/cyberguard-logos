@@ -1,6 +1,6 @@
 "use client";
 
-import { OptionButtons, QuestionCard } from "./QuestionCard";
+import { OptionButtons, QuestionCard } from "../QuestionCard";
 
 interface WantIntensiveQuestionProps {
   onYes: () => void;
@@ -9,7 +9,7 @@ interface WantIntensiveQuestionProps {
 
 export function WantIntensiveQuestion({ onYes, onNo }: WantIntensiveQuestionProps) {
   return (
-    <QuestionCard title="Хочешь попасть на КиберБезИнтенсив?">
+    <QuestionCard title="Хочешь попасть на КиберСтраж?">
       <OptionButtons
         options={[
           { label: "Да", value: "yes", onSelect: onYes },

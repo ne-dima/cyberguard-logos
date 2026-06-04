@@ -1,0 +1,20 @@
+[
+  {
+    "id": "positive-technologies",
+    "name": "Positive Technologies",
+    "logoPath": "/partners/positive-technologies.png",
+    "url": "https://www.ptsecurity.com/ru-ru/"
+  },
+  {
+    "id": "bi-zone",
+    "name": "BI.ZONE",
+    "logoPath": "/partners/bi.zone.svg",
+    "url": "https://bi.zone/"
+  },
+  {
+    "id": "infowatch",
+    "name": "InfoWatch",
+    "logoPath": "/partners/InfoWatch.svg",
+    "url": "https://www.infowatch.com/"
+  }
+]

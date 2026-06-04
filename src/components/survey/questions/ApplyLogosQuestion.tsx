@@ -9,7 +9,7 @@ interface ApplyLogosQuestionProps {
 
 export function ApplyLogosQuestion({ onYes, onNo }: ApplyLogosQuestionProps) {
   return (
-    <QuestionCard title="Хочешь поступать в Логос?">
+    <QuestionCard title="Хочешь поступать в «ЛОГОС»?">
       <OptionButtons
         options={[
           { label: "Да", value: "yes", onSelect: onYes },

@@ -2,7 +2,12 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { loadSurveyState, resetSurveyState, saveSurveyState } from "@/lib/survey/storage";
-import type { FarewellKey, SurveyState, SurveyStep } from "@/lib/survey/types";
+import {
+  INITIAL_SURVEY_STATE,
+  type FarewellKey,
+  type SurveyState,
+  type SurveyStep,
+} from "@/lib/survey/types";
 import { isSubjectMatching } from "@/lib/survey/validateSubject";
 
 function closeWithFarewell(
@@ -21,17 +26,16 @@ function closeWithFarewell(
 }
 
 export function useSurvey() {
-  const [state, setState] = useState<SurveyState | null>(null);
+  const [state, setState] = useState<SurveyState>(INITIAL_SURVEY_STATE);
+  const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
     setState(loadSurveyState());
+    setIsReady(true);
   }, []);
 
   const persist = useCallback((updater: (prev: SurveyState) => SurveyState) => {
     setState((prev) => {
-      if (!prev) {
-        return prev;
-      }
       const next = updater(prev);
       saveSurveyState(next);
       return next;
@@ -39,7 +43,12 @@ export function useSurvey() {
   }, []);
 
   const openSurvey = useCallback(() => {
-    persist((prev) => ({ ...prev, isOpen: true }));
+    persist((prev) => {
+      if (prev.completedAt || prev.step === "closed" || prev.farewell) {
+        return { ...INITIAL_SURVEY_STATE, isOpen: true };
+      }
+      return { ...prev, isOpen: true };
+    });
   }, [persist]);
 
   const closeSurvey = useCallback(() => {
@@ -116,19 +125,28 @@ export function useSurvey() {
         closeWithFarewell({ ...prev, answers: { ...prev.answers, applyLogos: false } }, "other_options"),
       ),
 
+    /** Сразу после успешной отправки анкеты — чтобы при возврате на главную опрос не открывался снова */
+    markApplicationSubmitted: () => {
+      persist((prev) => ({
+        ...prev,
+        step: "closed",
+        completedAt: prev.completedAt ?? new Date().toISOString(),
+      }));
+    },
+
     completeRegistration: () => {
       persist((prev) => ({
         ...prev,
         step: "closed",
         isOpen: false,
-        completedAt: new Date().toISOString(),
+        completedAt: prev.completedAt ?? new Date().toISOString(),
       }));
     },
   };
 
   return {
     state,
-    isReady: state !== null,
+    isReady,
     openSurvey,
     closeSurvey,
     restartSurvey,

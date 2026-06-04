@@ -9,7 +9,7 @@ interface QuestionCardProps {
 
 export function QuestionCard({ title, children }: QuestionCardProps) {
   return (
-    <div className="glass-card rounded-[20px] p-6 sm:p-8">
+    <div className="glass-card rounded-t-[20px] p-6 sm:rounded-[20px] sm:p-8">
       <h2 className="font-heading text-xl font-bold leading-snug text-text sm:text-2xl">
         {title}
       </h2>

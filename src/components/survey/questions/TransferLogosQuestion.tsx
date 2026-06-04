@@ -9,7 +9,7 @@ interface TransferLogosQuestionProps {
 
 export function TransferLogosQuestion({ onYes, onNo }: TransferLogosQuestionProps) {
   return (
-    <QuestionCard title="Хочешь переводиться в Логос?">
+    <QuestionCard title="Хочешь переводиться в «ЛОГОС»?">
       <OptionButtons
         options={[
           { label: "Да", value: "yes", onSelect: onYes },
