@@ -1,0 +1,10 @@
+# Production: БД без порта на хост, приложение только localhost (прокси через logos-class-nginx).
+# docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+
+services:
+  db:
+    ports: []
+
+  app:
+    ports:
+      - "127.0.0.1:${APP_PORT:-3002}:3000"

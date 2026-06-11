@@ -1,29 +1,27 @@
 import { NextResponse } from "next/server";
-import { isAdminAuthenticated, unauthorizedResponse } from "@/lib/admin/auth";
+import { requireAdminApi } from "@/lib/admin/guard";
 import { readApplications } from "@/lib/applications/storage";
 import type { ApplicationStatus } from "@/types/application";
 
+const VALID_STATUSES = new Set<ApplicationStatus>(["new", "accepted", "rejected"]);
+
 export async function GET(request: Request) {
-  if (!(await isAdminAuthenticated())) {
-    return unauthorizedResponse();
+  const auth = await requireAdminApi(request);
+  if (auth instanceof Response) {
+    return auth;
   }
 
-  try {
-    const { searchParams } = new URL(request.url);
-    const status = searchParams.get("status") as ApplicationStatus | "all" | null;
+  const { searchParams } = new URL(request.url);
+  const statusParam = searchParams.get("status");
 
-    let applications = await readApplications();
-    applications.sort(
-      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-    );
+  let applications = await readApplications();
 
-    if (status && status !== "all") {
-      applications = applications.filter((item) => item.status === status);
+  if (statusParam) {
+    if (!VALID_STATUSES.has(statusParam as ApplicationStatus)) {
+      return NextResponse.json({ error: "Некорректный фильтр статуса." }, { status: 400 });
     }
-
-    return NextResponse.json({ applications });
-  } catch (error) {
-    console.error("GET /api/admin/applications failed:", error);
-    return NextResponse.json({ error: "Не удалось загрузить заявки." }, { status: 500 });
+    applications = applications.filter((item) => item.status === statusParam);
   }
+
+  return NextResponse.json({ applications });
 }

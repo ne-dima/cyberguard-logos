@@ -1,0 +1,11 @@
+# Пример для Caddy. Замените домен и путь к .env.
+# Запуск: caddy run --config deploy/Caddyfile.example
+
+cyber.logos.ru {
+	encode gzip zstd
+	reverse_proxy 127.0.0.1:3000 {
+		header_up X-Forwarded-For {remote_host}
+		header_up X-Forwarded-Proto {scheme}
+		header_up Host {host}
+	}
+}

@@ -14,7 +14,11 @@
     "db:import-json": "tsx scripts/import-applications-json.ts",
     "docker:up": "docker compose up -d --build",
     "docker:down": "docker compose down",
-    "docker:logs": "docker compose logs -f app"
+    "docker:logs": "docker compose logs -f app",
+    "prod:check": "tsx scripts/check-production-env.ts",
+    "prod:up": "docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build",
+    "prod:down": "docker compose -f docker-compose.yml -f docker-compose.prod.yml down",
+    "prod:logs": "docker compose -f docker-compose.yml -f docker-compose.prod.yml logs -f app"
   },
   "dependencies": {
     "@prisma/client": "^6.19.3",

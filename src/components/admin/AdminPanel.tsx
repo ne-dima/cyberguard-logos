@@ -5,6 +5,7 @@ import { AdminLogin } from "@/components/admin/AdminLogin";
 import { ApplicationsTab } from "@/components/admin/ApplicationsTab";
 import { InvitationsTab } from "@/components/admin/InvitationsTab";
 import { Header } from "@/components/layout/Header";
+import { adminFetch, setAdminCsrfToken } from "@/lib/http/adminFetch";
 import { fetchJson } from "@/lib/http/fetchJson";
 
 type AdminTab = "applications" | "invitations";
@@ -15,8 +16,11 @@ export function AdminPanel() {
   const [invitationsKey, setInvitationsKey] = useState(0);
 
   const checkSession = useCallback(async () => {
-    const payload = await fetchJson<{ authenticated: boolean }>("/api/admin/session");
+    const payload = await fetchJson<{ authenticated: boolean; csrfToken: string | null }>(
+      "/api/admin/session",
+    );
     setAuthenticated(payload.authenticated);
+    setAdminCsrfToken(payload.csrfToken);
   }, []);
 
   useEffect(() => {
@@ -24,7 +28,8 @@ export function AdminPanel() {
   }, [checkSession]);
 
   async function handleLogout() {
-    await fetch("/api/admin/logout", { method: "POST" });
+    await adminFetch("/api/admin/logout", { method: "POST" });
+    setAdminCsrfToken(null);
     setAuthenticated(false);
   }
 

@@ -1,5 +1,5 @@
 import { readApplicationPhotoBuffer } from "@/lib/applications/storage";
-import { isAdminAuthenticated, unauthorizedResponse } from "@/lib/admin/auth";
+import { requireAdminApi } from "@/lib/admin/guard";
 
 interface RouteContext {
   params: Promise<{ path: string[] }>;
@@ -12,9 +12,10 @@ const MIME_TYPES: Record<string, string> = {
   webp: "image/webp",
 };
 
-export async function GET(_request: Request, context: RouteContext) {
-  if (!(await isAdminAuthenticated())) {
-    return unauthorizedResponse();
+export async function GET(request: Request, context: RouteContext) {
+  const auth = await requireAdminApi(request);
+  if (auth instanceof Response) {
+    return auth;
   }
 
   const { path: pathSegments } = await context.params;
@@ -35,7 +36,7 @@ export async function GET(_request: Request, context: RouteContext) {
   return new Response(new Uint8Array(buffer), {
     headers: {
       "Content-Type": MIME_TYPES[extension] ?? "application/octet-stream",
-      "Cache-Control": "private, max-age=3600",
+      "Cache-Control": "private, no-store",
     },
   });
 }

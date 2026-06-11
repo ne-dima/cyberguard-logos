@@ -122,6 +122,9 @@ export function ApplicationDetailModal({
               <DetailRow label="Место жительства" className="sm:col-span-2">
                 {application.location}
               </DetailRow>
+              <DetailRow label="Поступление в «ЛОГОС»">
+                {application.wantsToEnroll ? "Да, хочет поступать" : "Нет"}
+              </DetailRow>
             </dl>
           </div>
         </div>

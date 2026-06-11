@@ -1,3 +1,4 @@
+import type { ReactElement } from "react";
 import type { ProgramActivityKind } from "@/content/programSchedule";
 
 const STROKE = {
@@ -103,7 +104,7 @@ function IconQuiz() {
   );
 }
 
-const ICONS: Record<ProgramActivityKind, () => JSX.Element> = {
+const ICONS: Record<ProgramActivityKind, () => ReactElement> = {
   lecture: IconLecture,
   quest: IconQuest,
   hackathon: IconHackathon,

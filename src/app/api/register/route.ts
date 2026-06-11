@@ -1,5 +1,6 @@
 import { randomUUID } from "crypto";
 import { NextResponse } from "next/server";
+import { verifyYandexCaptcha } from "@/lib/captcha/yandex";
 import {
   findActiveApplicationByEmail,
   saveApplication,
@@ -7,6 +8,11 @@ import {
 } from "@/lib/applications/storage";
 import { sendApplicationReceivedEmail } from "@/lib/email/sendEmail";
 import { USER_MESSAGES } from "@/lib/messages/userMessages";
+import {
+  checkRateLimit,
+  rateLimitResponse,
+  RATE_LIMITS,
+} from "@/lib/security/rateLimit";
 import {
   buildConsentRecord,
   validateRegistrationConsents,
@@ -29,12 +35,24 @@ function parseFormValues(formData: FormData): RegistrationFormValues {
     location: String(formData.get("location") ?? ""),
     motivationLetter: String(formData.get("motivationLetter") ?? ""),
     about: String(formData.get("about") ?? ""),
+    wantsToEnroll: formData.get("wantsToEnroll") === "true",
   };
 }
 
 export async function POST(request: Request) {
+  const limited = checkRateLimit(request, RATE_LIMITS.register);
+  if (!limited.allowed) {
+    return rateLimitResponse(limited.retryAfterSec ?? 60);
+  }
+
   try {
     const formData = await request.formData();
+    const captchaToken = String(formData.get("captchaToken") ?? "");
+
+    if (!(await verifyYandexCaptcha(captchaToken, request))) {
+      return NextResponse.json({ error: USER_MESSAGES.captchaFailed }, { status: 400 });
+    }
+
     const values = parseFormValues(formData);
     const photo = formData.get("photo");
 
@@ -56,7 +74,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: firstError }, { status: 400 });
     }
 
-    const duplicate = await findActiveApplicationByEmail(values.email);
+    const normalizedEmail = values.email.trim().toLowerCase();
+    const duplicate = await findActiveApplicationByEmail(normalizedEmail);
 
     if (duplicate) {
       return NextResponse.json(
@@ -66,7 +85,18 @@ export async function POST(request: Request) {
     }
 
     const applicationId = randomUUID();
-    const photoPath = await saveApplicationPhoto(photo, applicationId);
+    let photoPath: string;
+    try {
+      photoPath = await saveApplicationPhoto(photo, applicationId);
+    } catch (photoError) {
+      if (photoError instanceof Error && photoError.message === "INVALID_PHOTO") {
+        return NextResponse.json(
+          { error: "Подойдут только JPG, PNG или WebP с корректным содержимым." },
+          { status: 400 },
+        );
+      }
+      throw photoError;
+    }
 
     const application = await saveApplication({
       id: applicationId,
@@ -74,11 +104,12 @@ export async function POST(request: Request) {
       birthDate: values.birthDate,
       organization: values.organization.trim(),
       phone: values.phone.trim(),
-      email: values.email.trim(),
+      email: normalizedEmail,
       parentContacts: values.parentContacts.trim(),
       location: values.location.trim(),
       motivationLetter: values.motivationLetter.trim(),
       about: values.about.trim() || undefined,
+      wantsToEnroll: values.wantsToEnroll,
       photoPath,
       consents: buildConsentRecord(consents, values.birthDate),
     });

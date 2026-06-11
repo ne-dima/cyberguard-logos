@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { useCallback, useState } from "react";
+import { YandexSmartCaptcha } from "@/components/captcha/YandexSmartCaptcha";
 import { Footer } from "@/components/layout/Footer";
 import { Header } from "@/components/layout/Header";
 import { Button } from "@/components/ui/Button";
@@ -88,19 +89,33 @@ function StatusResult({ application }: { application: PublicApplicationStatus })
 
 export function StatusPageClient() {
   const searchParams = useSearchParams();
-  const router = useRouter();
-  const [email, setEmail] = useState("");
+  const initialEmail = searchParams.get("email")?.trim() ?? "";
+
+  const [email, setEmail] = useState(initialEmail);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const [captchaReset, setCaptchaReset] = useState(0);
+  const handleCaptchaToken = useCallback((token: string) => {
+    setCaptchaToken(token);
+    setError(null);
+  }, []);
+  const handleCaptchaExpired = useCallback(() => {
+    setCaptchaToken(null);
+  }, []);
   const [application, setApplication] = useState<PublicApplicationStatus | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  async function fetchStatus(targetEmail: string) {
+  async function fetchStatus(targetEmail: string, token: string) {
     setIsLoading(true);
     setError(null);
     setApplication(null);
 
     try {
-      const response = await fetch(`/api/status?email=${encodeURIComponent(targetEmail)}`);
+      const response = await fetch("/api/status", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: targetEmail, captchaToken: token }),
+      });
       const payload = (await response.json()) as {
         application?: PublicApplicationStatus;
         error?: string;
@@ -111,28 +126,28 @@ export function StatusPageClient() {
       }
 
       setApplication(payload.application ?? null);
-      router.replace(`/status?email=${encodeURIComponent(targetEmail)}`, { scroll: false });
+      setCaptchaToken(null);
+      setCaptchaReset((value) => value + 1);
     } catch (fetchError) {
       setError(fetchError instanceof Error ? fetchError.message : USER_MESSAGES.genericError);
+      setCaptchaToken(null);
+      setCaptchaReset((value) => value + 1);
     } finally {
       setIsLoading(false);
     }
   }
 
-  useEffect(() => {
-    const emailFromUrl = searchParams.get("email")?.trim();
-    if (emailFromUrl) {
-      setEmail(emailFromUrl);
-      fetchStatus(emailFromUrl);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
   function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
-    if (email.trim()) {
-      fetchStatus(email.trim());
+    const trimmed = email.trim();
+    if (!trimmed) {
+      return;
     }
+    if (!captchaToken) {
+      setError(USER_MESSAGES.captchaRequired);
+      return;
+    }
+    void fetchStatus(trimmed, captchaToken);
   }
 
   return (
@@ -145,8 +160,8 @@ export function StatusPageClient() {
             Статус заявки
           </h1>
           <p className="mt-3 text-base leading-relaxed text-text-muted">
-            Введи адрес электронной почты, который указал в анкете, и мы покажем текущий статус
-            рассмотрения.
+            Введи адрес электронной почты, который указал в анкете, пройди капчу и мы покажем
+            текущий статус рассмотрения.
           </p>
 
           <form
@@ -164,13 +179,27 @@ export function StatusPageClient() {
               autoComplete="email"
             />
 
+            <div className="mt-4">
+              <p className="mb-2 text-sm font-medium text-text">Проверка</p>
+              <YandexSmartCaptcha
+                resetSignal={captchaReset}
+                onToken={handleCaptchaToken}
+                onExpired={handleCaptchaExpired}
+              />
+            </div>
+
             {error ? (
               <p role="alert" className="mt-4 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">
                 {error}
               </p>
             ) : null}
 
-            <Button type="submit" className="mt-4" fullWidth disabled={isLoading}>
+            <Button
+              type="submit"
+              className="mt-4"
+              fullWidth
+              disabled={isLoading || !captchaToken}
+            >
               {isLoading ? "Ищем заявку..." : "Проверить статус"}
             </Button>
           </form>

@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/Button";
 import { ApplicationDetailModal } from "@/components/admin/ApplicationDetailModal";
 import { RejectModal } from "@/components/admin/RejectModal";
 import { getApplicationPhotoUrl } from "@/lib/applications/photoUrl";
-import { fetchJson } from "@/lib/http/fetchJson";
+import { adminFetch, adminFetchJson } from "@/lib/http/adminFetch";
 import {
   APPLICATION_STATUS_LABELS,
   type Application,
@@ -56,7 +56,7 @@ export function ApplicationsTab({ onRefreshInvitations }: ApplicationsTabProps) 
 
     try {
       const query = filter === "all" ? "" : `?status=${filter}`;
-      const payload = await fetchJson<{ applications: Application[] }>(
+      const payload = await adminFetchJson<{ applications: Application[] }>(
         `/api/admin/applications${query}`,
       );
       setApplications(payload.applications);
@@ -105,7 +105,7 @@ export function ApplicationsTab({ onRefreshInvitations }: ApplicationsTabProps) 
     setActionId(id);
 
     try {
-      const response = await fetch(`/api/admin/applications/${id}`, {
+      const response = await adminFetch(`/api/admin/applications/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status, rejectionComment }),
@@ -143,8 +143,20 @@ export function ApplicationsTab({ onRefreshInvitations }: ApplicationsTabProps) 
     setRejectTarget(application);
   }
 
-  function handleExport() {
-    window.open("/api/admin/applications/export", "_blank");
+  async function handleExport() {
+    const response = await adminFetch("/api/admin/applications/export");
+    if (!response.ok) {
+      setError("Не удалось скачать экспорт.");
+      return;
+    }
+
+    const blob = await response.blob();
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `cyber-intensive-applications-${new Date().toISOString().slice(0, 10)}.xlsx`;
+    link.click();
+    URL.revokeObjectURL(url);
   }
 
   return (
@@ -166,7 +178,7 @@ export function ApplicationsTab({ onRefreshInvitations }: ApplicationsTabProps) 
             </button>
           ))}
         </div>
-        <Button variant="secondary" size="sm" onClick={handleExport}>
+        <Button variant="secondary" size="sm" onClick={() => void handleExport()}>
           Экспорт Excel
         </Button>
       </div>

@@ -1,3 +1,4 @@
+import { appPath } from "@/lib/config/appUrl";
 import { deliverEmail, type EmailPayload } from "./provider";
 
 export type { EmailPayload };
@@ -19,7 +20,7 @@ export async function sendApplicationReceivedEmail(
       "Мы получили твою заявку на участие в КиберСтраж в колледже «ЛОГОС».",
       "Администратор рассмотрит её в ближайшее время и напишет на эту почту.",
       "",
-      "Статус заявки можно проверить на сайте в разделе «Статус заявки».",
+      `Статус заявки: ${appPath("/status")}`,
       "",
       "С уважением,",
       "Команда КиберСтража",

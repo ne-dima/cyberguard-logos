@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { fetchJson } from "@/lib/http/fetchJson";
+import { adminFetchJson } from "@/lib/http/adminFetch";
 import { Button } from "@/components/ui/Button";
 import type { Application } from "@/types/application";
 
@@ -15,7 +15,7 @@ export function InvitationsTab() {
     setIsLoading(true);
 
     try {
-      const payload = await fetchJson<{ applications: Application[] }>(
+      const payload = await adminFetchJson<{ applications: Application[] }>(
         "/api/admin/applications?status=accepted",
       );
       setApplications(payload.applications);
@@ -33,7 +33,7 @@ export function InvitationsTab() {
     setMessage(null);
 
     try {
-      await fetchJson("/api/admin/invitations", {
+      await adminFetchJson("/api/admin/invitations", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ applicationId }),

@@ -82,16 +82,10 @@ export function useSurvey() {
         closeWithFarewell({ ...prev, answers: { ...prev.answers, studyPlace: "university" } }, "not_for_us"),
       ),
     studySchoolCollege: () =>
-      goToStep("transfer_logos", { studyPlace: "school_college" }),
+      goToStep("average_grade", { studyPlace: "school_college" }),
     studyNotStudying: () =>
       persist((prev) =>
         closeWithFarewell({ ...prev, answers: { ...prev.answers, studyPlace: "not_studying" } }, "not_for_us"),
-      ),
-
-    transferYes: () => goToStep("average_grade", { transferLogos: true }),
-    transferNo: () =>
-      persist((prev) =>
-        closeWithFarewell({ ...prev, answers: { ...prev.answers, transferLogos: false } }, "goodbye_general"),
       ),
 
     gradeBelow4: () =>
@@ -117,13 +111,7 @@ export function useSurvey() {
       persist((prev) =>
         closeWithFarewell({ ...prev, answers: { ...prev.answers, subjectGrade: "not_5" } }, "goodbye_general"),
       ),
-    subject5: () => goToStep("apply_logos", { subjectGrade: "5" }),
-
-    applyYes: () => goToStep("registration", { applyLogos: true }),
-    applyNo: () =>
-      persist((prev) =>
-        closeWithFarewell({ ...prev, answers: { ...prev.answers, applyLogos: false } }, "other_options"),
-      ),
+    subject5: () => goToStep("registration", { subjectGrade: "5" }),
 
     /** Сразу после успешной отправки анкеты — чтобы при возврате на главную опрос не открывался снова */
     markApplicationSubmitted: () => {

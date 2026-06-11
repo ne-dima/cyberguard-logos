@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useState } from "react";
+import { YandexSmartCaptcha } from "@/components/captcha/YandexSmartCaptcha";
 import { Button } from "@/components/ui/Button";
 import { InputField, TextareaField } from "@/components/ui/FormField";
 import { PhotoUpload } from "@/components/ui/PhotoUpload";
@@ -41,6 +42,7 @@ const INITIAL_VALUES: RegistrationFormValues = {
   location: "",
   motivationLetter: "",
   about: "",
+  wantsToEnroll: false,
 };
 
 export function RegistrationForm({ onSubmitted, onComplete }: RegistrationFormProps) {
@@ -53,6 +55,17 @@ export function RegistrationForm({ onSubmitted, onComplete }: RegistrationFormPr
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [submittedEmail, setSubmittedEmail] = useState("");
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const [captchaReset, setCaptchaReset] = useState(0);
+
+  const handleCaptchaToken = useCallback((token: string) => {
+    setCaptchaToken(token);
+    setSubmitError(null);
+  }, []);
+
+  const handleCaptchaExpired = useCallback(() => {
+    setCaptchaToken(null);
+  }, []);
 
   function updateField<K extends keyof RegistrationFormValues>(
     field: K,
@@ -83,6 +96,11 @@ export function RegistrationForm({ onSubmitted, onComplete }: RegistrationFormPr
       return;
     }
 
+    if (!captchaToken) {
+      setSubmitError(USER_MESSAGES.captchaRequired);
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -98,10 +116,12 @@ export function RegistrationForm({ onSubmitted, onComplete }: RegistrationFormPr
       if (values.about.trim()) {
         formData.append("about", values.about.trim());
       }
+      formData.append("wantsToEnroll", String(values.wantsToEnroll));
       formData.append("photo", photo);
       formData.append("personalDataConsent", String(consents.personalData));
       formData.append("photoConsent", String(consents.photo));
       formData.append("parentConsent", String(consents.parentRepresentative));
+      formData.append("captchaToken", captchaToken);
 
       const response = await fetch("/api/register", {
         method: "POST",
@@ -121,6 +141,8 @@ export function RegistrationForm({ onSubmitted, onComplete }: RegistrationFormPr
       setSubmitError(
         error instanceof Error ? error.message : USER_MESSAGES.genericError,
       );
+      setCaptchaToken(null);
+      setCaptchaReset((value) => value + 1);
     } finally {
       setIsSubmitting(false);
     }
@@ -251,6 +273,17 @@ export function RegistrationForm({ onSubmitted, onComplete }: RegistrationFormPr
           placeholder="Например: участвую в олимпиадах по информатике..."
         />
 
+        <label htmlFor="wantsToEnroll" className="flex cursor-pointer items-start gap-3 text-sm leading-relaxed">
+          <input
+            id="wantsToEnroll"
+            type="checkbox"
+            checked={values.wantsToEnroll}
+            onChange={(event) => updateField("wantsToEnroll", event.target.checked)}
+            className="mt-0.5 h-4 w-4 shrink-0 rounded border-border text-accent focus:ring-accent"
+          />
+          <span className="text-text">Хочу поступать в колледж «ЛОГОС»</span>
+        </label>
+
         <ConsentCheckboxes
           birthDate={values.birthDate}
           consents={consents}
@@ -261,13 +294,22 @@ export function RegistrationForm({ onSubmitted, onComplete }: RegistrationFormPr
           }}
         />
 
+        <div className="pt-2">
+          <p className="mb-2 text-sm font-medium text-text">Проверка перед отправкой</p>
+          <YandexSmartCaptcha
+            resetSignal={captchaReset}
+            onToken={handleCaptchaToken}
+            onExpired={handleCaptchaExpired}
+          />
+        </div>
+
         {submitError ? (
           <p role="alert" className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">
             {submitError}
           </p>
         ) : null}
 
-        <Button type="submit" fullWidth disabled={isSubmitting}>
+        <Button type="submit" fullWidth disabled={isSubmitting || !captchaToken}>
           {isSubmitting ? "Отправляем заявку..." : "Отправить заявку"}
         </Button>
       </form>

@@ -1,28 +1,23 @@
-import { NextResponse } from "next/server";
-import { isAdminAuthenticated, unauthorizedResponse } from "@/lib/admin/auth";
+import { requireAdminApi } from "@/lib/admin/guard";
 import { buildApplicationsWorkbook } from "@/lib/applications/exportExcel";
 import { readApplications } from "@/lib/applications/storage";
 
-export async function GET() {
-  if (!(await isAdminAuthenticated())) {
-    return unauthorizedResponse();
+export async function GET(request: Request) {
+  const auth = await requireAdminApi(request);
+  if (auth instanceof Response) {
+    return auth;
   }
 
-  let applications;
-  try {
-    applications = await readApplications();
-  } catch (error) {
-    console.error("GET /api/admin/applications/export failed:", error);
-    return NextResponse.json({ error: "Не удалось экспортировать заявки." }, { status: 500 });
-  }
+  const applications = await readApplications();
   const buffer = await buildApplicationsWorkbook(applications);
-  const filename = `applications-${new Date().toISOString().slice(0, 10)}.xlsx`;
+  const filename = `cyber-intensive-applications-${new Date().toISOString().slice(0, 10)}.xlsx`;
 
-  return new Response(buffer, {
+  return new Response(new Uint8Array(buffer), {
     headers: {
       "Content-Type":
         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
       "Content-Disposition": `attachment; filename="${filename}"`,
+      "Cache-Control": "no-store",
     },
   });
 }

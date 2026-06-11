@@ -1,15 +1,16 @@
 services:
   db:
     image: postgres:16-alpine
+    container_name: cyberguard-logos-db
     restart: unless-stopped
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-cyber}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-cyber_secret_change_me}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
       POSTGRES_DB: ${POSTGRES_DB:-cyber_intensive}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
-      - "${POSTGRES_PORT:-5432}:5432"
+      - "127.0.0.1:${POSTGRES_PORT:-5434}:5432"
     healthcheck:
       test:
         [
@@ -24,15 +25,25 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        DATABASE_URL: postgresql://build:build@127.0.0.1:5432/build?schema=public
+        NEXT_PUBLIC_YANDEX_CAPTCHA_CLIENT_KEY: ${NEXT_PUBLIC_YANDEX_CAPTCHA_CLIENT_KEY}
+    image: cyberguard-logos-app:latest
+    container_name: cyberguard-logos-app
     restart: unless-stopped
     ports:
-      - "${APP_PORT:-3000}:3000"
+      - "127.0.0.1:${APP_PORT:-3002}:3000"
     environment:
       NODE_ENV: production
-      DATABASE_URL: postgresql://${POSTGRES_USER:-cyber}:${POSTGRES_PASSWORD:-cyber_secret_change_me}@db:5432/${POSTGRES_DB:-cyber_intensive}
+      DATABASE_URL: postgresql://${POSTGRES_USER:-cyber}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-cyber_intensive}
       UPLOADS_DIR: /app/data/uploads
+      APP_URL: ${APP_URL:?Set APP_URL in .env (public HTTPS URL)}
       ADMIN_USERNAME: ${ADMIN_USERNAME:-admin}
-      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-admin123}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?Set ADMIN_PASSWORD in .env}
+      ADMIN_SESSION_SECRET: ${ADMIN_SESSION_SECRET:?Set ADMIN_SESSION_SECRET in .env}
+      TRUST_PROXY: ${TRUST_PROXY:-true}
+      NEXT_PUBLIC_YANDEX_CAPTCHA_CLIENT_KEY: ${NEXT_PUBLIC_YANDEX_CAPTCHA_CLIENT_KEY}
+      YANDEX_CAPTCHA_SERVER_KEY: ${YANDEX_CAPTCHA_SERVER_KEY:?Set YANDEX_CAPTCHA_SERVER_KEY in .env}
       EMAIL_MODE: ${EMAIL_MODE:-mock}
       EMAIL_FROM: ${EMAIL_FROM:-cyber-intensive@logos.local}
       SMTP_HOST: ${SMTP_HOST:-}
@@ -45,7 +56,17 @@ services:
     depends_on:
       db:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3000/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 45s
 
 volumes:
   postgres_data:
   uploads_data:
+
+networks:
+  default:
+    name: cyberguard-logos-network

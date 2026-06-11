@@ -20,6 +20,7 @@ export interface Application {
   motivationLetter: string;
   photoPath: string;
   about?: string;
+  wantsToEnroll: boolean;
   status: ApplicationStatus;
   rejectionComment?: string;
   invitationSentAt?: string;

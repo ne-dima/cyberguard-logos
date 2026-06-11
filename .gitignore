@@ -37,6 +37,15 @@ yarn-error.log*
 .env.test.local
 .env.production.local
 !.env.example
+!.env.production.example
+
+# backup archives
+/backups/
+
+# TLS keys (upload to server manually)
+/ssl/**/*.pem
+!/ssl/**/.gitkeep
+!/ssl/**/README.md
 
 # vercel
 .vercel

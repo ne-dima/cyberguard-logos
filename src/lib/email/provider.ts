@@ -40,18 +40,21 @@ export async function deliverEmail({ to, subject, text }: EmailPayload): Promise
 
     if (smtp) {
       await smtp.sendMail({ from, to, subject, text });
-      console.log(`[EMAIL SMTP] Sent to ${to}: ${subject}`);
+      console.log(`[EMAIL SMTP] Sent: ${subject}`);
       return;
     }
 
-    console.warn("[EMAIL] SMTP_MODE включён, но SMTP_HOST/SMTP_USER/SMTP_PASS не заданы. Fallback на mock.");
+    if (process.env.NODE_ENV === "production") {
+      throw new Error("SMTP is not configured but EMAIL_MODE=smtp.");
+    }
+
+    console.warn("[EMAIL] SMTP не настроен. Fallback на mock.");
   }
 
-  console.log("──────────────────────────────────────");
-  console.log("[EMAIL MOCK]");
-  console.log(`From: ${from}`);
-  console.log(`To: ${to}`);
-  console.log(`Subject: ${subject}`);
-  console.log(text);
-  console.log("──────────────────────────────────────");
+  if (process.env.NODE_ENV === "production") {
+    throw new Error("EMAIL_MODE=mock is not allowed in production.");
+  }
+
+  console.log(`[EMAIL MOCK] To: ${to} | Subject: ${subject}`);
 }
+

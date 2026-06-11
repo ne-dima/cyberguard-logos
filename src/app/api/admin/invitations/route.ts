@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server";
-import { isAdminAuthenticated, unauthorizedResponse } from "@/lib/admin/auth";
+import { requireAdminApi } from "@/lib/admin/guard";
 import { getApplicationById, updateApplication } from "@/lib/applications/storage";
 import { sendInvitationEmail } from "@/lib/email/sendEmail";
 
 export async function POST(request: Request) {
-  if (!(await isAdminAuthenticated())) {
-    return unauthorizedResponse();
+  const auth = await requireAdminApi(request, { requireCsrf: true });
+  if (auth instanceof Response) {
+    return auth;
   }
 
   const body = (await request.json()) as { applicationId?: string };

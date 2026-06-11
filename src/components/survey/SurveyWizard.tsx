@@ -4,12 +4,10 @@ import { Modal } from "@/components/ui/Modal";
 import { useSurveyContext } from "@/context/SurveyContext";
 import { FarewellMessage } from "./FarewellMessage";
 import { RegistrationForm } from "./RegistrationForm";
-import { ApplyLogosQuestion } from "./questions/ApplyLogosQuestion";
 import { AverageGradeQuestion } from "./questions/AverageGradeQuestion";
 import { FavoriteSubjectQuestion } from "./questions/FavoriteSubjectQuestion";
 import { StudyPlaceQuestion } from "./questions/StudyPlaceQuestion";
 import { SubjectGradeQuestion } from "./questions/SubjectGradeQuestion";
-import { TransferLogosQuestion } from "./questions/TransferLogosQuestion";
 import { WantIntensiveQuestion } from "./questions/WantIntensiveQuestion";
 
 export function SurveyWizard() {
@@ -40,13 +38,6 @@ export function SurveyWizard() {
             onNotStudying={handlers.studyNotStudying}
           />
         );
-      case "transfer_logos":
-        return (
-          <TransferLogosQuestion
-            onYes={handlers.transferYes}
-            onNo={handlers.transferNo}
-          />
-        );
       case "average_grade":
         return (
           <AverageGradeQuestion
@@ -63,13 +54,6 @@ export function SurveyWizard() {
             on5={handlers.subject5}
           />
         );
-      case "apply_logos":
-        return (
-          <ApplyLogosQuestion
-            onYes={handlers.applyYes}
-            onNo={handlers.applyNo}
-          />
-        );
       case "registration":
         return (
           <RegistrationForm
@@ -77,6 +61,8 @@ export function SurveyWizard() {
             onComplete={handlers.completeRegistration}
           />
         );
+      case "closed":
+        return null;
       default:
         return null;
     }

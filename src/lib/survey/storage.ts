@@ -2,7 +2,51 @@ import {
   INITIAL_SURVEY_STATE,
   SURVEY_STORAGE_KEY,
   type SurveyState,
+  type SurveyStep,
 } from "./types";
+
+const VALID_STEPS = new Set<SurveyStep>([
+  "want_intensive",
+  "study_place",
+  "average_grade",
+  "favorite_subject",
+  "subject_grade",
+  "registration",
+  "closed",
+]);
+
+/** Шаги, убранные из опроса — перенаправляем на актуальные. */
+const LEGACY_STEP_MAP: Record<string, SurveyStep> = {
+  transfer_logos: "average_grade",
+  apply_logos: "registration",
+};
+
+function normalizeStep(step: unknown): SurveyStep {
+  if (typeof step !== "string") {
+    return INITIAL_SURVEY_STATE.step;
+  }
+
+  if (step in LEGACY_STEP_MAP) {
+    return LEGACY_STEP_MAP[step];
+  }
+
+  if (VALID_STEPS.has(step as SurveyStep)) {
+    return step as SurveyStep;
+  }
+
+  return INITIAL_SURVEY_STATE.step;
+}
+
+function normalizeSurveyState(parsed: SurveyState): SurveyState {
+  const step = normalizeStep(parsed.step);
+
+  if (parsed.completedAt || step === "closed") {
+    return { ...parsed, step: "closed", isOpen: false };
+  }
+
+  // Незавершённый опрос: сохраняем шаг, модалку открываем только по кнопке
+  return { ...parsed, step, isOpen: false, farewell: null };
+}
 
 export function loadSurveyState(): SurveyState {
   if (typeof window === "undefined") {
@@ -16,13 +60,7 @@ export function loadSurveyState(): SurveyState {
     }
 
     const parsed = JSON.parse(raw) as SurveyState;
-
-    if (parsed.completedAt) {
-      return { ...parsed, isOpen: false };
-    }
-
-    // Незавершённый опрос: сохраняем шаг, модалку открываем только по кнопке
-    return { ...parsed, isOpen: false, farewell: null };
+    return normalizeSurveyState(parsed);
   } catch {
     return INITIAL_SURVEY_STATE;
   }

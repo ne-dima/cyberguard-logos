@@ -2,6 +2,11 @@ import { mkdir, readFile, writeFile } from "fs/promises";
 import path from "path";
 import type { Application as PrismaApplication, Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db/prisma";
+import {
+  detectImageKind,
+  extensionForImageKind,
+  isMimeMatchingKind,
+} from "@/lib/security/image";
 import type { Application, ApplicationConsents, ApplicationStatus } from "@/types/application";
 
 function resolveUploadsDir(): string {
@@ -25,6 +30,7 @@ function toApplication(row: PrismaApplication): Application {
     motivationLetter: row.motivationLetter,
     photoPath: row.photoPath,
     about: row.about ?? undefined,
+    wantsToEnroll: row.wantsToEnroll,
     status: row.status as ApplicationStatus,
     rejectionComment: row.rejectionComment ?? undefined,
     invitationSentAt: row.invitationSentAt?.toISOString(),
@@ -72,6 +78,7 @@ export async function saveApplication(
       motivationLetter: application.motivationLetter,
       photoPath: application.photoPath,
       about: application.about ?? null,
+      wantsToEnroll: application.wantsToEnroll,
       consents: application.consents as Prisma.InputJsonValue | undefined,
       status: "new",
     },
@@ -85,16 +92,17 @@ export async function saveApplicationPhoto(
 ): Promise<string> {
   await ensureUploadsDir();
 
-  const extension = file.name.split(".").pop()?.toLowerCase() || "jpg";
-  const safeExtension = ["jpg", "jpeg", "png", "webp"].includes(extension)
-    ? extension === "jpeg"
-      ? "jpg"
-      : extension
-    : "jpg";
+  const buffer = Buffer.from(await file.arrayBuffer());
+  const kind = detectImageKind(buffer);
+
+  if (!kind || !isMimeMatchingKind(file.type, kind)) {
+    throw new Error("INVALID_PHOTO");
+  }
+
+  const safeExtension = extensionForImageKind(kind);
   const filename = `${applicationId}.${safeExtension}`;
   const filepath = path.join(resolveUploadsDir(), filename);
 
-  const buffer = Buffer.from(await file.arrayBuffer());
   await writeFile(filepath, buffer);
 
   return `uploads/${filename}`;

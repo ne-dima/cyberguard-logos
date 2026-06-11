@@ -25,6 +25,7 @@ model Application {
   motivationLetter String
   photoPath        String
   about            String?
+  wantsToEnroll    Boolean           @default(false)
   status           ApplicationStatus @default(new)
   rejectionComment String?
   invitationSentAt DateTime?

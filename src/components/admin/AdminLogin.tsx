@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { USER_MESSAGES } from "@/lib/messages/userMessages";
+import { setAdminCsrfToken } from "@/lib/http/adminFetch";
 import { Button } from "@/components/ui/Button";
 import { InputField } from "@/components/ui/FormField";
 
@@ -27,11 +28,13 @@ export function AdminLogin({ onSuccess }: AdminLoginProps) {
         body: JSON.stringify({ username, password }),
       });
 
+      const payload = (await response.json()) as { error?: string; csrfToken?: string };
+
       if (!response.ok) {
-        const payload = (await response.json()) as { error?: string };
         throw new Error(payload.error || "Ошибка входа");
       }
 
+      setAdminCsrfToken(payload.csrfToken ?? null);
       onSuccess();
     } catch (submitError) {
       setError(

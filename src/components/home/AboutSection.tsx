@@ -24,6 +24,7 @@ function AboutSlides({
           src={slide.src}
           alt={slide.alt}
           fill
+          unoptimized
           sizes="(max-width: 768px) 100vw, 100vw"
           priority={index === 0}
           className={`object-cover transition-opacity duration-1000 ease-in-out ${imageClassName ?? "object-center"} ${

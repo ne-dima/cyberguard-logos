@@ -1,25 +1,34 @@
 import { NextResponse } from "next/server";
 import { USER_MESSAGES } from "@/lib/messages/userMessages";
-import { ADMIN_SESSION_VALUE, verifyAdminCredentials } from "@/lib/admin/auth";
-import { ADMIN_SESSION_COOKIE } from "@/lib/admin/config";
+import {
+  createAdminSessionCookie,
+  createAdminSessionToken,
+  verifyAdminCredentials,
+} from "@/lib/admin/auth";
+import { assertProductionSecurityConfig } from "@/lib/admin/config";
+import {
+  checkRateLimit,
+  rateLimitResponse,
+  RATE_LIMITS,
+} from "@/lib/security/rateLimit";
 
 export async function POST(request: Request) {
+  assertProductionSecurityConfig();
+
+  const limited = checkRateLimit(request, RATE_LIMITS.adminLogin);
+  if (!limited.allowed) {
+    return rateLimitResponse(limited.retryAfterSec ?? 60);
+  }
+
   const body = (await request.json()) as { username?: string; password?: string };
 
   if (!verifyAdminCredentials(body.username ?? "", body.password ?? "")) {
     return NextResponse.json({ error: USER_MESSAGES.adminLoginFailed }, { status: 401 });
   }
 
-  const response = NextResponse.json({ ok: true });
-  const isProduction = process.env.NODE_ENV === "production";
-
-  response.cookies.set(ADMIN_SESSION_COOKIE, ADMIN_SESSION_VALUE, {
-    httpOnly: true,
-    sameSite: "lax",
-    secure: isProduction,
-    path: "/",
-    maxAge: 60 * 60 * 8,
-  });
+  const { token, csrf } = createAdminSessionToken();
+  const response = NextResponse.json({ ok: true, csrfToken: csrf });
+  response.cookies.set(createAdminSessionCookie(token));
 
   return response;
 }

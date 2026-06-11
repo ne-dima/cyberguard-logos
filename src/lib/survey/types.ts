@@ -1,11 +1,9 @@
 export type SurveyStep =
   | "want_intensive"
   | "study_place"
-  | "transfer_logos"
   | "average_grade"
   | "favorite_subject"
   | "subject_grade"
-  | "apply_logos"
   | "registration"
   | "closed";
 
@@ -18,11 +16,9 @@ export type FarewellKey =
 export interface SurveyAnswers {
   wantIntensive?: boolean;
   studyPlace?: "university" | "school_college" | "not_studying";
-  transferLogos?: boolean;
   averageGrade?: "below_4" | "above_4";
   favoriteSubject?: string;
   subjectGrade?: "not_5" | "5";
-  applyLogos?: boolean;
 }
 
 export interface SurveyState {
