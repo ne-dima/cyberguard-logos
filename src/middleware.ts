@@ -10,21 +10,36 @@ const SECURITY_HEADERS: Record<string, string> = {
   "Cross-Origin-Resource-Policy": "same-origin",
 };
 
-const CAPTCHA_ORIGINS =
-  "https://smartcaptcha.yandexcloud.net https://smartcaptcha.cloud.yandex.ru";
+const CAPTCHA_ORIGINS = [
+  "https://smartcaptcha.yandexcloud.net",
+  "https://smartcaptcha.cloud.yandex.ru",
+];
 
-const CONTENT_SECURITY_POLICY = [
-  "default-src 'self'",
-  `script-src 'self' 'unsafe-inline' ${CAPTCHA_ORIGINS}`,
-  `style-src 'self' 'unsafe-inline' ${CAPTCHA_ORIGINS}`,
-  `img-src 'self' data: blob: ${CAPTCHA_ORIGINS}`,
-  "font-src 'self'",
-  `connect-src 'self' ${CAPTCHA_ORIGINS}`,
-  `frame-src ${CAPTCHA_ORIGINS}`,
-  "frame-ancestors 'none'",
-  "base-uri 'self'",
-  "form-action 'self'",
-].join("; ");
+function buildContentSecurityPolicy(): string {
+  const isDev = process.env.NODE_ENV !== "production";
+
+  const scriptSrc = ["'self'", "'unsafe-inline'", ...CAPTCHA_ORIGINS];
+  const connectSrc = ["'self'", ...CAPTCHA_ORIGINS];
+
+  // React / Next.js dev (HMR, source maps) — не нужно в production
+  if (isDev) {
+    scriptSrc.push("'unsafe-eval'");
+    connectSrc.push("ws:", "wss:");
+  }
+
+  return [
+    "default-src 'self'",
+    `script-src ${scriptSrc.join(" ")}`,
+    `style-src 'self' 'unsafe-inline' ${CAPTCHA_ORIGINS.join(" ")}`,
+    `img-src 'self' data: blob: ${CAPTCHA_ORIGINS.join(" ")}`,
+    "font-src 'self'",
+    `connect-src ${connectSrc.join(" ")}`,
+    `frame-src ${CAPTCHA_ORIGINS.join(" ")}`,
+    "frame-ancestors 'none'",
+    "base-uri 'self'",
+    "form-action 'self'",
+  ].join("; ");
+}
 
 export function middleware(_request: NextRequest) {
   const response = NextResponse.next();
@@ -33,7 +48,7 @@ export function middleware(_request: NextRequest) {
     response.headers.set(key, value);
   }
 
-  response.headers.set("Content-Security-Policy", CONTENT_SECURITY_POLICY);
+  response.headers.set("Content-Security-Policy", buildContentSecurityPolicy());
 
   if (process.env.NODE_ENV === "production") {
     response.headers.set(

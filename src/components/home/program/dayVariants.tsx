@@ -25,9 +25,9 @@ export function DayLayoutPoster({
           {day.number}
         </span>
         <p className="relative text-xs font-bold uppercase tracking-[0.2em] text-white/70">
-          День {day.number}
+          День {day.number} · {day.company}
         </p>
-        <h3 className="relative mt-2 max-w-lg font-heading text-3xl font-extrabold leading-tight sm:text-4xl">
+        <h3 className="relative mt-2 max-w-xl font-heading text-2xl font-extrabold leading-tight sm:text-3xl">
           {day.title}
         </h3>
         <p className="relative mt-3 max-w-md text-sm leading-relaxed text-white/85 sm:text-base">

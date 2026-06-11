@@ -80,9 +80,13 @@ export function GuestsSection() {
           </p>
         </ScrollReveal>
 
-        <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-10 flex flex-wrap justify-center gap-6">
           {guests.map((guest, index) => (
-            <ScrollReveal key={guest.id} delay={index * 80}>
+            <ScrollReveal
+              key={guest.id}
+              delay={index * 80}
+              className="w-full max-w-[345px] sm:w-[calc(50%-12px)] sm:max-w-[360px]"
+            >
               <GuestCard guest={guest} />
             </ScrollReveal>
           ))}
